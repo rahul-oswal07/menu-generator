@@ -1,0 +1,1 @@
+{"version":3,"file":"ImageGenerator.d.ts","sourceRoot":"","sources":["../../src/interfaces/ImageGenerator.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,cAAc,EAAE,MAAM,UAAU,CAAC;AAEpD,MAAM,WAAW,cAAc;IAC7B,iBAAiB,CAAC,QAAQ,EAAE,QAAQ,GAAG,OAAO,CAAC,cAAc,CAAC,CAAC;IAC/D,aAAa,CAAC,KAAK,EAAE,QAAQ,EAAE,GAAG,OAAO,CAAC,cAAc,EAAE,CAAC,CAAC;CAC7D"}
