@@ -1,0 +1,234 @@
+/* No Results Fallback Styles */
+
+.no-results-fallback {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.fallback-icon {
+  margin-bottom: 24px;
+  position: relative;
+  display: inline-block;
+}
+
+.icon-emoji {
+  font-size: 4rem;
+  display: inline-block;
+  margin: 0 8px;
+}
+
+.icon-emoji.secondary {
+  opacity: 0.6;
+  font-size: 3rem;
+  position: relative;
+  top: 8px;
+}
+
+.fallback-content h2 {
+  color: #333;
+  font-size: 2rem;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.fallback-description {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.fallback-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+}
+
+.fallback-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.fallback-button.primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.fallback-button.primary:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.fallback-button.secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.fallback-button.secondary:hover {
+  background-color: #545b62;
+  transform: translateY(-1px);
+}
+
+/* Troubleshooting Tips */
+.troubleshooting-tips {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.troubleshooting-tips h3 {
+  color: #333;
+  font-size: 1.3rem;
+  margin-bottom: 24px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.tip-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tip-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tip-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tip-content h4 {
+  color: #333;
+  font-size: 1rem;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.tip-content p {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Help Section */
+.help-section {
+  background: #e3f2fd;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: left;
+}
+
+.help-section h4 {
+  color: #1976d2;
+  font-size: 1.1rem;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+.help-section p {
+  color: #0d47a1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .no-results-fallback {
+    padding: 32px 16px;
+  }
+  
+  .fallback-content h2 {
+    font-size: 1.6rem;
+  }
+  
+  .fallback-description {
+    font-size: 1rem;
+  }
+  
+  .fallback-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .fallback-button {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .troubleshooting-tips {
+    padding: 24px 16px;
+  }
+  
+  .tips-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .tip-card {
+    padding: 16px;
+  }
+  
+  .help-section {
+    padding: 20px 16px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .icon-emoji {
+    font-size: 3rem;
+  }
+  
+  .icon-emoji.secondary {
+    font-size: 2.5rem;
+  }
+  
+  .fallback-content h2 {
+    font-size: 1.4rem;
+  }
+  
+  .troubleshooting-tips h3 {
+    font-size: 1.2rem;
+  }
+  
+  .tip-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+  
+  .tip-icon {
+    font-size: 2rem;
+  }
+}

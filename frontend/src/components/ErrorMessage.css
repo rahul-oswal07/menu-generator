@@ -1,0 +1,207 @@
+/* Error Message Styles */
+
+.error-message {
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  border-left: 4px solid;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error-message.error {
+  border-left-color: #dc3545;
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.error-message.warning {
+  border-left-color: #ffc107;
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.error-message.info {
+  border-left-color: #17a2b8;
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.error-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.error-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.error-content {
+  flex: 1;
+}
+
+.error-text {
+  font-weight: 500;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.error-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.error-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.retry-button:hover {
+  background-color: #0056b3;
+}
+
+.dismiss-button {
+  background-color: #6c757d;
+  color: white;
+}
+
+.dismiss-button:hover {
+  background-color: #545b62;
+}
+
+.error-message.error .retry-button {
+  background-color: #dc3545;
+}
+
+.error-message.error .retry-button:hover {
+  background-color: #c82333;
+}
+
+.error-message.warning .retry-button {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.error-message.warning .retry-button:hover {
+  background-color: #e0a800;
+}
+
+.error-message.info .retry-button {
+  background-color: #17a2b8;
+}
+
+.error-message.info .retry-button:hover {
+  background-color: #138496;
+}
+
+/* Troubleshooting Section */
+.troubleshooting-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.troubleshooting-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.troubleshooting-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.troubleshooting-item {
+  margin-bottom: 12px;
+  padding: 8px 0;
+  line-height: 1.4;
+}
+
+.troubleshooting-item:last-child {
+  margin-bottom: 0;
+}
+
+.troubleshooting-item strong {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.tip-action-button {
+  margin-left: 8px;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.tip-action-button:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .error-message {
+    padding: 12px;
+    margin: 12px 0;
+  }
+  
+  .error-header {
+    gap: 8px;
+  }
+  
+  .error-actions {
+    margin-top: 8px;
+  }
+  
+  .error-button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  
+  .troubleshooting-section {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+  
+  .troubleshooting-item {
+    margin-bottom: 8px;
+    padding: 6px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .error-actions {
+    flex-direction: column;
+  }
+  
+  .error-button {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .tip-action-button {
+    display: block;
+    margin: 4px 0 0 0;
+    width: fit-content;
+  }
+}
