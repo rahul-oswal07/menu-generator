@@ -173,88 +173,29 @@ function App() {
     }
   }, []);
 
-  // Poll processing status
-  const pollProcessingStatus = useCallback(async (sessionId: string) => {
-    const pollInterval = setInterval(async () => {
-      try {
-        const statusResponse = await fetch(`/api/status/${sessionId}`);
 
-        if (!statusResponse.ok) {
-          throw new Error(`Status check failed: ${statusResponse.statusText}`);
-        }
-
-        const statusResult: ApiResponse<ProcessingStatusResponse> = await statusResponse.json();
-
-        if (!statusResult.success || !statusResult.data) {
-          throw new Error(statusResult.error || 'Status check failed');
-        }
-
-        const status = statusResult.data;
-
-        setAppState(prev => ({
-          ...prev,
-          processingState: status
-        }));
-
-        // If processing is complete, get results
-        if (status.status === 'completed') {
-          clearInterval(pollInterval);
-          await getResults(sessionId);
-        } else if (status.status === 'failed') {
-          clearInterval(pollInterval);
-          throw new Error('Processing failed');
-        }
-
-      } catch (error) {
-        clearInterval(pollInterval);
-        const errorMessage = error instanceof Error ? error.message : 'Status check failed';
-        reportError(error instanceof Error ? error : new Error(errorMessage), {
-          component: 'App',
-          action: 'poll_status'
-        });
-
-        setAppState(prev => ({
-          ...prev,
-          error: errorMessage,
-          processingState: null
-        }));
-      }
-    }, 2000); // Poll every 2 seconds
-
-    // Cleanup after 5 minutes
-    setTimeout(() => {
-      clearInterval(pollInterval);
-    }, 300000);
-  }, []);
-
-  // Get results
+  // Get results (moved above pollProcessingStatus)
   const getResults = useCallback(async (sessionId: string) => {
     try {
       const resultsResponse = await fetch(`/api/results/${sessionId}`);
-
       if (!resultsResponse.ok) {
         throw new Error(`Results fetch failed: ${resultsResponse.statusText}`);
       }
-
       const resultsResult: ApiResponse<ResultsResponse> = await resultsResponse.json();
-
       if (!resultsResult.success || !resultsResult.data) {
         throw new Error(resultsResult.error || 'Results fetch failed');
       }
-
       setAppState(prev => ({
         ...prev,
         results: resultsResult.data!.results,
         processingState: null
       }));
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to get results';
       reportError(error instanceof Error ? error : new Error(errorMessage), {
         component: 'App',
         action: 'get_results'
       });
-
       setAppState(prev => ({
         ...prev,
         error: errorMessage,
@@ -262,6 +203,66 @@ function App() {
       }));
     }
   }, []);
+
+  // Poll processing status (refactored to use recursive setTimeout)
+  const pollProcessingStatus = useCallback((sessionId: string) => {
+    let isCancelled = false;
+    let timeoutId: NodeJS.Timeout;
+
+    const poll = async () => {
+      try {
+        const statusResponse = await fetch(`/api/status/${sessionId}`);
+        if (!statusResponse.ok) {
+          throw new Error(`Status check failed: ${statusResponse.statusText}`);
+        }
+        const statusResult: ApiResponse<ProcessingStatusResponse> = await statusResponse.json();
+        if (!statusResult.success || !statusResult.data) {
+          throw new Error(statusResult.error || 'Status check failed');
+        }
+        const status = statusResult.data;
+        setAppState(prev => ({
+          ...prev,
+          processingState: status
+        }));
+        if (status.status === 'completed') {
+          await getResults(sessionId);
+          return;
+        } else if (status.status === 'failed') {
+          throw new Error('Processing failed');
+        }
+        // Continue polling if not cancelled
+        if (!isCancelled) {
+          timeoutId = setTimeout(poll, 2000);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Status check failed';
+        reportError(error instanceof Error ? error : new Error(errorMessage), {
+          component: 'App',
+          action: 'poll_status'
+        });
+        setAppState(prev => ({
+          ...prev,
+          error: errorMessage,
+          processingState: null
+        }));
+      }
+    };
+
+    poll();
+
+    // Cleanup after 5 minutes
+    const cleanupTimeout = setTimeout(() => {
+      isCancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    }, 300000);
+
+    // Return a cleanup function in case needed in the future
+    return () => {
+      isCancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      clearTimeout(cleanupTimeout);
+    };
+  }, [getResults]);
 
   // Retry processing
   const handleRetryProcessing = useCallback(() => {
@@ -328,13 +329,13 @@ function App() {
   const handleSaveImage = useCallback(async (itemId: string) => {
     if (!appState.results) return;
 
-    const generatedImage = appState.results.generatedImages.find(img => img.menuItemId === itemId);
-    if (!generatedImage || generatedImage.status !== 'success') return;
+    const generatedImage = appState.results.find(img => img.id === itemId);
+    if (!generatedImage || generatedImage.generationStatus !== 'success') return;
 
     try {
       // Create download link
       const link = document.createElement('a');
-      link.href = generatedImage.url;
+      link.href = generatedImage.generatedImageUrl?.toString() || '';
       link.download = `dish-${itemId}.jpg`;
       document.body.appendChild(link);
       link.click();
@@ -353,18 +354,18 @@ function App() {
   const handleShareImage = useCallback(async (itemId: string) => {
     if (!appState.results) return;
 
-    const generatedImage = appState.results.generatedImages.find(img => img.menuItemId === itemId);
-    if (!generatedImage || generatedImage.status !== 'success') return;
+    const generatedImage = appState.results.find(img => img.id === itemId);
+    if (!generatedImage || generatedImage.generationStatus !== 'success') return;
 
     try {
       if (navigator.share) {
         await navigator.share({
           title: 'Generated Dish Image',
-          url: generatedImage.url
+          url: generatedImage.generatedImageUrl
         });
       } else {
         // Fallback: copy to clipboard
-        await navigator.clipboard.writeText(generatedImage.url);
+        await navigator.clipboard.writeText(generatedImage.generatedImageUrl?.toString() || '');
         // You could show a toast notification here
       }
 
@@ -437,6 +438,7 @@ function App() {
               </div>
             </section>
           )}
+
 
           {/* Show results */}
           {appState.results && (

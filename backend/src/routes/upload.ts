@@ -1,10 +1,14 @@
+
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-// import path from 'path'; // Not used currently
+import { sessionRepositoryInstance } from '../menuItemRepositoryInstance';
 import { handleUploadError, upload, validateFileUpload } from '../middleware/upload';
-import { ApiResponse, UploadResponse } from '../types';
+import { ApiResponse, ProcessingStatus, UploadResponse } from '../types';
 
 const router = Router();
+
+// Singleton session repository for in-memory session management
+const sessionRepo = sessionRepositoryInstance;
 
 /**
  * @swagger
@@ -73,6 +77,7 @@ const router = Router();
  *         $ref: '#/components/responses/InternalServerError'
  */
 // POST /api/upload - Upload menu image
+
 router.post(
   '/upload',
   upload.single('menuImage'),
@@ -88,13 +93,24 @@ router.post(
         } as ApiResponse);
       }
 
-      // Generate session ID if not provided
-      const sessionId = req.body.sessionId || uuidv4();
 
-      // Construct the image URL (relative path for now)
-      const imageUrl = `/uploads/${sessionId}/original/${req.file.filename}`;
+      // Always use a single sessionId (if array, use first value)
+      let sessionId = req.body.sessionId;
+      if (Array.isArray(sessionId)) {
+        sessionId = sessionId[0];
+      }
+      if (!sessionId) {
+        sessionId = uuidv4();
+      }
+      const sessionDirName = `session_${sessionId}`;
+      const imageUrl = `/uploads/${sessionDirName}/original/${req.file.filename}`;
 
-      console.log(imageUrl);
+      // Create session in repository
+      await sessionRepo.create({
+        id: sessionId,
+        originalImageUrl: imageUrl,
+        status: 'uploading' as ProcessingStatus
+      });
 
       // Log successful upload
       console.log(`File uploaded successfully: ${req.file.filename}, Session: ${sessionId}`);
@@ -169,17 +185,23 @@ router.post(
  *         $ref: '#/components/responses/InternalServerError'
  */
 // GET /api/upload/:sessionId/status - Check upload status (placeholder for future use)
-router.get('/upload/:sessionId/status', (req: Request, res: Response) => {
-  const { sessionId } = req.params;
 
-  // For now, just return a basic status
-  // This will be expanded when we add processing pipeline
-  res.json({
+router.get('/upload/:sessionId/status', async (req: Request, res: Response) => {
+  const { sessionId } = req.params;
+  const session = await sessionRepo.findById(sessionId);
+  if (!session) {
+    return res.status(404).json({
+      success: false,
+      error: 'not_found',
+      message: 'Session not found'
+    } as ApiResponse);
+  }
+  return res.json({
     success: true,
     data: {
-      sessionId,
-      status: 'uploaded',
-      message: 'File upload completed'
+      sessionId: session.id,
+      status: session.status,
+      message: `Session status: ${session.status}`
     }
   } as ApiResponse);
 });

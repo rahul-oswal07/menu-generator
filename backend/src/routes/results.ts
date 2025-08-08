@@ -1,10 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { ResultsManager } from '../services/ResultsManager';
-import { ApiResponse, ResultsResponse, ProcessingStatusResponse } from '../types';
+import { ApiResponse, ProcessingStatusResponse, ResultsResponse } from '../types';
 
 const router = Router();
 
-// Initialize results manager
+// Initialize menu item repository and results manager
 const resultsManager = new ResultsManager();
 
 /**
@@ -180,7 +180,7 @@ router.post('/:sessionId/save-image', async (req: Request, res: Response) => {
       return res.status(400).json(response);
     }
 
-    const downloadUrl = await resultsManager.generateDownloadUrl(sessionId, menuItemId);
+    const downloadUrl = await resultsManager.generateDownloadUrl(sessionId);
     
     if (!downloadUrl) {
       const response: ApiResponse = {
@@ -230,7 +230,7 @@ router.post('/:sessionId/share-image', async (req: Request, res: Response) => {
       return res.status(400).json(response);
     }
 
-    const shareUrl = await resultsManager.generateShareUrl(sessionId, menuItemId);
+    const shareUrl = await resultsManager.generateShareUrl(sessionId);
     
     if (!shareUrl) {
       const response: ApiResponse = {

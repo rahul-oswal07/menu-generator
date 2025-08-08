@@ -14,21 +14,18 @@ let processingPipeline: ProcessingPipeline;
 // Initialize with environment configuration
 const initializeServices = () => {
   if (!processingPipeline) {
-    console.log("Open API key- ", process.env.OPENAI_API_KEY);
     const apiKey = process.env.OPENAI_API_KEY;
-
-    if (apiKey) {
-      const imageGeneratorService = new ImageGeneratorService({
-        apiKey,
-        model: 'dall-e-3',
-        quality: 'standard',
-        size: '1024x1024',
-        maxRetries: 3
-      });
-      processingPipeline = new ProcessingPipeline(imageGeneratorService);
-    } else {
-      processingPipeline = new ProcessingPipeline();
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY is required for image generation.');
     }
+    const imageGeneratorService = new ImageGeneratorService({
+      apiKey,
+      model: 'dall-e-3',
+      quality: 'standard',
+      size: '1024x1024',
+      maxRetries: 3
+    });
+    processingPipeline = new ProcessingPipeline(imageGeneratorService);
   }
   return processingPipeline;
 };
@@ -87,13 +84,17 @@ const initializeServices = () => {
  */
 // POST /api/process - Start processing a menu image
 router.post('/process', asyncHandler(async (req: express.Request, res: express.Response) => {
-  const { sessionId } = req.body;
-  debugger;
-  if (!sessionId) {
+
+  let { sessionId } = req.body;
+  // If sessionId is an array (e.g., from form-data), use the first value
+  if (Array.isArray(sessionId)) {
+    sessionId = sessionId[0];
+  }
+  if (!sessionId || typeof sessionId !== 'string') {
     return res.status(400).json({
       success: false,
       error: 'VALIDATION_ERROR',
-      message: 'Session ID is required'
+      message: 'Session ID is required and must be a string'
     } as ApiResponse);
   }
 
@@ -101,7 +102,7 @@ router.post('/process', asyncHandler(async (req: express.Request, res: express.R
     const pipeline = initializeServices();
 
     // Find the actual uploaded file in the session directory
-    const sessionDir = path.join(process.cwd(), 'uploads', sessionId, 'original');
+    const sessionDir = path.join(process.cwd(), 'uploads', `session_${sessionId}`, 'original');
 
     console.log(sessionDir);
 
@@ -129,14 +130,14 @@ router.post('/process', asyncHandler(async (req: express.Request, res: express.R
     }
 
     // Construct the correct image URL with the actual filename
-    const imageUrl = `/uploads/${sessionId}/original/${uploadedFile}`;
+    const imageUrl = `/uploads/session_${sessionId}/original/${uploadedFile}`;
 
     console.log(`Starting processing for session ${sessionId} with file: ${uploadedFile}`);
 
     // Start processing asynchronously
     pipeline.processMenuImage(sessionId, imageUrl)
       .then(() => {
-        console.log(`Processing completed for session: ${sessionId}`);
+        console.log(`\nProcessing completed for session: ${sessionId}`);
       })
       .catch((error) => {
         console.error(`Processing failed for session ${sessionId}:`, error);
@@ -354,12 +355,5 @@ router.post('/regenerate', asyncHandler(async (req: express.Request, res: expres
     } as ApiResponse);
   }
 }));
-
-router.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Processing routes are working'  
-  } as ApiResponse);
-});
 
 export default router;

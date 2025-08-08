@@ -1,6 +1,6 @@
 import express from 'express';
-import { ProcessingPipeline } from '../services/ProcessingPipeline';
 import { ImageGeneratorService } from '../services/ImageGeneratorService';
+import { ProcessingPipeline } from '../services/ProcessingPipeline';
 import { ApiResponse } from '../types';
 
 const router = express.Router();
@@ -12,17 +12,16 @@ let processingPipeline: ProcessingPipeline;
 const initializeServices = () => {
   if (!processingPipeline) {
     const apiKey = process.env.OPENAI_API_KEY;
-    if (apiKey) {
-      const imageGeneratorService = new ImageGeneratorService({
-        apiKey,
-        size: '512x512',
-        quality: 'standard',
-        maxRetries: 3
-      });
-      processingPipeline = new ProcessingPipeline(imageGeneratorService);
-    } else {
-      processingPipeline = new ProcessingPipeline();
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY is required for image generation.');
     }
+    const imageGeneratorService = new ImageGeneratorService({
+      apiKey,
+      size: '512x512',
+      quality: 'standard',
+      maxRetries: 3
+    });
+    processingPipeline = new ProcessingPipeline(imageGeneratorService);
   }
   return processingPipeline;
 };

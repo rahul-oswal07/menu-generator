@@ -1,5 +1,4 @@
 import { ProcessingStatus } from '../types';
-
 export interface SessionModel {
   id: string;
   originalImageUrl: string;

@@ -1,6 +1,6 @@
-import axios from 'axios';
+import { AzureOpenAI } from 'openai';
 import { ImageGenerator } from '../interfaces/ImageGenerator';
-import { MenuItem, GeneratedImage } from '../types';
+import { GeneratedImage, MenuItem } from '../types';
 
 export interface ImageGenerationConfig {
   apiKey: string;
@@ -35,7 +35,8 @@ export class ImageGeneratorService implements ImageGenerator {
   async generateDishImage(menuItem: MenuItem): Promise<GeneratedImage> {
     try {
       const prompt = this.generatePrompt(menuItem);
-      const imageUrl = await this.callImageGenerationAPI(prompt);
+      console.log(prompt)
+      const imageUrl =  await this.callImageGenerationAPI(prompt);
       
       return {
         url: imageUrl,
@@ -110,35 +111,29 @@ export class ImageGeneratorService implements ImageGenerator {
   /**
    * Call the external image generation API with retry logic
    */
-  private async callImageGenerationAPI(prompt: string): Promise<string> {
+  private async callImageGenerationAPI(prompt: string): Promise<string | undefined> {
+
+    // You will need to set these environment variables or edit the following values.
+const endpoint = process.env["AZURE_OPENAI_ENDPOINT"] || "https://devontestgpt.openai.azure.com/";
+const deployment = process.env["DEPLOYMENT_NAME"] || "dall-e-3";
+const apiVersion = process.env["OPENAI_API_VERSION"] || "2024-04-01-preview";
+const apiKey = ''
+
+const size = "1024x1024";
+const style = "vivid";
+const quality = "standard";
+const n = 1;
     let lastError: any;
     
     for (let attempt = 1; attempt <= this.config.maxRetries; attempt++) {
       try {
-        const response = await axios.post<{
-          data: Array<{ url: string }>;
-        }>(
-          'https://api.openai.com/v1/images/generations',
-          {
-            model: this.config.model,
-            prompt: prompt,
-            n: 1,
-            size: this.config.size,
-            quality: this.config.quality,
-            response_format: 'url'
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${this.config.apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 30000 // 30 second timeout
-          }
-        );
+        const client = new AzureOpenAI({apiKey, endpoint, deployment, apiVersion});
+        const response = await client.images.generate({prompt, size, style, quality, n });
 
         const responseData = response.data;
-        if (responseData && responseData.data && Array.isArray(responseData.data) && responseData.data.length > 0 && responseData.data[0] && responseData.data[0].url) {
-          return responseData.data[0].url;
+        if (responseData) {
+          console.log(`Image generated successfully: ${responseData[0].url}`);
+          return responseData[0].url;
         } else {
           const error = new Error('Invalid response format from image generation API');
           (error as any).isInvalidResponse = true;

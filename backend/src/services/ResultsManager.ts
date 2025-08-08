@@ -1,7 +1,8 @@
-import { ProcessingResult, ProcessingStatusResponse } from '../types';
 import fs from 'fs/promises';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { menuItemRepository } from '../menuItemRepositoryInstance';
+import { MenuItemModel } from '../models/MenuItemModel';
+import { ProcessingResult, ProcessingStatusResponse } from '../types';
 
 interface CacheEntry {
   results: ProcessingResult;
@@ -24,7 +25,7 @@ interface ShareLink {
   id: string;
   sessionId: string;
   menuItemId: string;
-  url: string;
+  url: string | undefined;
   createdAt: Date;
   expiresAt: Date;
 }
@@ -33,7 +34,6 @@ export class ResultsManager {
   private cache: Map<string, CacheEntry> = new Map();
   private shareLinks: Map<string, ShareLink> = new Map();
   private readonly CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-  private readonly SHARE_LINK_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
   private readonly MAX_CACHE_SIZE = 100; // Maximum number of sessions to cache
   private cleanupInterval?: NodeJS.Timeout;
 
@@ -78,27 +78,9 @@ export class ResultsManager {
   /**
    * Retrieve processing results for a session
    */
-  async getResults(sessionId: string): Promise<ProcessingResult | null> {
-    let cacheEntry = this.cache.get(sessionId);
-
-    // If not in memory cache, try to load from disk
-    if (!cacheEntry) {
-      const diskEntry = await this.loadFromDisk(sessionId);
-      if (diskEntry) {
-        cacheEntry = diskEntry;
-        this.cache.set(sessionId, cacheEntry);
-      } else {
-        return null;
-      }
-    }
-
-    if (this.isExpired(cacheEntry)) {
-      return null;
-    }
-
-    // Update last accessed time
-    cacheEntry.lastAccessed = new Date();
-    return cacheEntry.results;
+  async getResults(sessionId: string): Promise<MenuItemModel[] | null> {
+    const result = await menuItemRepository.findBySessionId(sessionId);
+    return result;
   }
 
   /**
@@ -151,62 +133,53 @@ export class ResultsManager {
   /**
    * Generate a download URL for a specific dish image
    */
-  async generateDownloadUrl(sessionId: string, menuItemId: string): Promise<string | null> {
+  async generateDownloadUrl(sessionId: string): Promise<string | null> {
     const results = await this.getResults(sessionId);
     
     if (!results) {
       return null;
     }
 
-    const generatedImage = results.generatedImages.find(
-      img => img.menuItemId === menuItemId && img.status === 'success'
-    );
+   return null;
 
-    if (!generatedImage) {
-      return null;
-    }
+    // if (!generatedImage) {
+    //   return null;
+    // }
 
-    // In a real implementation, this might generate a signed URL for cloud storage
-    // For now, return the direct URL with a download parameter
-    return `${generatedImage.url}?download=true&sessionId=${sessionId}`;
+    // // In a real implementation, this might generate a signed URL for cloud storage
+    // // For now, return the direct URL with a download parameter
+    // return `${generatedImage.url}?download=true&sessionId=${sessionId}`;
   }
 
   /**
    * Generate a shareable link for a dish image
    */
-  async generateShareUrl(sessionId: string, menuItemId: string): Promise<string | null> {
+  async generateShareUrl(sessionId: string): Promise<string | null> {
     const results = await this.getResults(sessionId);
     
     if (!results) {
       return null;
     }
 
-    const generatedImage = results.generatedImages.find(
-      img => img.menuItemId === menuItemId && img.status === 'success'
-    );
+   return null;
 
-    if (!generatedImage) {
-      return null;
-    }
+    // // Create a share link
+    // const shareId = uuidv4();
+    // const now = new Date();
+    // const expiresAt = new Date(now.getTime() + this.SHARE_LINK_TTL);
 
-    // Create a share link
-    const shareId = uuidv4();
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + this.SHARE_LINK_TTL);
+    // const shareLink: ShareLink = {
+    //   id: shareId,
+    //   sessionId,
+    //   menuItemId,
+    //   createdAt: now,
+    //   expiresAt
+    // };
 
-    const shareLink: ShareLink = {
-      id: shareId,
-      sessionId,
-      menuItemId,
-      url: generatedImage.url,
-      createdAt: now,
-      expiresAt
-    };
+    // this.shareLinks.set(shareId, shareLink);
 
-    this.shareLinks.set(shareId, shareLink);
-
-    // Return the shareable URL
-    return `/api/share/${shareId}`;
+    // // Return the shareable URL
+    // return `/api/share/${shareId}`;
   }
 
   /**
@@ -394,10 +367,7 @@ export class ResultsManager {
     }
   }
 
-  /**
-   * Load cache entry from disk
-   */
-  private async loadFromDisk(sessionId: string): Promise<CacheEntry | null> {
+   private async loadFromDisk(sessionId: string): Promise<CacheEntry | null> {
     try {
       const filePath = path.join(process.cwd(), 'cache', `${sessionId}.json`);
       const data = await fs.readFile(filePath, 'utf-8');

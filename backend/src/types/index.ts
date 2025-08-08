@@ -1,5 +1,7 @@
 // Core data models and interfaces for the AI Menu Generator
 
+import { MenuItemModel } from "../models/MenuItemModel";
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -16,7 +18,7 @@ export interface ExtractedText {
 }
 
 export interface GeneratedImage {
-  url: string;
+  url: string | undefined;
   menuItemId: string;
   status: 'success' | 'failed';
   errorMessage?: string;
@@ -75,5 +77,5 @@ export interface ProcessingStatusResponse {
 
 export interface ResultsResponse {
   sessionId: string;
-  results: ProcessingResult;
+  results: MenuItemModel[];
 }

@@ -1,11 +1,10 @@
-import { OCRExtractor } from './OCRExtractor';
-import { ImageUploadHandler } from './ImageUploadHandler';
-import { ImageGeneratorService } from './ImageGeneratorService';
-import { BatchImageGeneratorService } from './BatchImageGeneratorService';
-import { ProcessingResult, ProcessingStatus } from '../types';
-import { SessionRepository } from '../models/Session';
-import { MenuItemRepository } from '../models/MenuItemModel';
 import { EventEmitter } from 'events';
+import { menuItemRepository, sessionRepositoryInstance } from '../menuItemRepositoryInstance';
+import { ProcessingResult, ProcessingStatus } from '../types';
+import { BatchImageGeneratorService } from './BatchImageGeneratorService';
+import { ImageGeneratorService } from './ImageGeneratorService';
+import { ImageUploadHandler } from './ImageUploadHandler';
+import { OCRExtractor } from './OCRExtractor';
 
 export interface ProcessingProgress {
   sessionId: string;
@@ -19,36 +18,29 @@ export interface ProcessingProgress {
 export class ProcessingPipeline extends EventEmitter {
   private ocrExtractor: OCRExtractor;
   private imageUploadHandler: ImageUploadHandler;
-  private imageGeneratorService?: ImageGeneratorService;
-  private batchImageGeneratorService?: BatchImageGeneratorService;
-  private sessionRepository: SessionRepository;
-  private menuItemRepository: MenuItemRepository;
+  private batchImageGeneratorService: BatchImageGeneratorService;
+  // Use singleton instance
   private processingTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private readonly PROCESSING_TIMEOUT = 60000; // 60 seconds (increased for image generation)
 
-  constructor(imageGeneratorService?: ImageGeneratorService) {
+  constructor(imageGeneratorService: ImageGeneratorService) {
     super();
     this.ocrExtractor = new OCRExtractor();
     this.imageUploadHandler = new ImageUploadHandler();
-    this.sessionRepository = new SessionRepository();
-    this.menuItemRepository = new MenuItemRepository();
-    
-    // Initialize image generation services
-    if (imageGeneratorService) {
-      this.imageGeneratorService = imageGeneratorService;
-      this.batchImageGeneratorService = new BatchImageGeneratorService(
-        imageGeneratorService,
-        {
-          maxConcurrentRequests: 3,
-          requestDelayMs: 1000,
-          maxRetries: 2,
-          progressCallback: (progress) => {
-            // Emit image generation progress
-            this.emit('imageGenerationProgress', progress);
-          }
+    // Use singleton instance
+    // Use singleton instance
+    this.batchImageGeneratorService = new BatchImageGeneratorService(
+      imageGeneratorService,
+      {
+        maxConcurrentRequests: 3,
+        requestDelayMs: 1000,
+        maxRetries: 2,
+        progressCallback: (progress) => {
+          // Emit image generation progress
+          this.emit('imageGenerationProgress', progress);
         }
-      );
-    }
+      }
+    );
   }
 
   /**
@@ -110,17 +102,17 @@ export class ProcessingPipeline extends EventEmitter {
       });
 
       // Store session and menu items in database
-      await this.sessionRepository.create({
+      await sessionRepositoryInstance.create({
         id: sessionId,
         originalImageUrl: imageUrl,
         status: 'completed'
       });
 
-      await this.menuItemRepository.createMany(sessionId, menuItems);
+      await menuItemRepository.createMany(sessionId, menuItems);
 
       // Stage 5: Generate dish images (if image generator is available)
       let generatedImages: any[] = [];
-      if (this.imageGeneratorService && menuItems.length > 0) {
+      if (menuItems.length > 0) {
         this.emitProgress(sessionId, {
           sessionId,
           status: 'processing',
@@ -130,7 +122,7 @@ export class ProcessingPipeline extends EventEmitter {
         });
 
         // Start batch image generation
-        await this.batchImageGeneratorService!.addBatch(sessionId, menuItems);
+        await this.batchImageGeneratorService.addBatch(sessionId, menuItems);
         
         // Wait for batch completion or timeout
         const batchResult = await this.waitForBatchCompletion(sessionId, 30000);
@@ -140,13 +132,13 @@ export class ProcessingPipeline extends EventEmitter {
           // Update database with generated images
           for (const generatedImage of generatedImages) {
             if (generatedImage.status === 'success') {
-              await this.menuItemRepository.updateGenerationStatus(
+              await menuItemRepository.updateGenerationStatus(
                 generatedImage.menuItemId,
                 'completed',
                 generatedImage.url
               );
             } else {
-              await this.menuItemRepository.updateGenerationStatus(
+              await menuItemRepository.updateGenerationStatus(
                 generatedImage.menuItemId,
                 'failed'
               );
@@ -304,12 +296,8 @@ export class ProcessingPipeline extends EventEmitter {
    * Regenerate images for specific menu items
    */
   async regenerateImages(sessionId: string, menuItemIds: string[]): Promise<boolean> {
-    if (!this.imageGeneratorService || !this.batchImageGeneratorService) {
-      return false;
-    }
-
     try {
-      const menuItems = await this.menuItemRepository.findBySessionId(sessionId);
+      const menuItems = await menuItemRepository.findBySessionId(sessionId);
       const itemsToRegenerate = menuItems.filter(item => 
         menuItemIds.includes(item.id)
       ).map(item => ({
@@ -338,12 +326,12 @@ export class ProcessingPipeline extends EventEmitter {
    * Get processing results for a session
    */
   async getProcessingResults(sessionId: string): Promise<ProcessingResult | null> {
-    const session = await this.sessionRepository.findById(sessionId);
+    const session = await sessionRepositoryInstance.findById(sessionId);
     if (!session) {
       return null;
     }
 
-    const menuItems = await this.menuItemRepository.findBySessionId(sessionId);
+    const menuItems = await menuItemRepository.findBySessionId(sessionId);
     
     return {
       originalImage: session.originalImageUrl,

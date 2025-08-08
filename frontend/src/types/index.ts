@@ -7,6 +7,8 @@ export interface MenuItem {
   price: string;
   category?: string;
   isManuallyEdited?: boolean;
+  generatedImageUrl?:string;
+  generationStatus: 'pending' | 'generating' | 'success' | 'failed';
 }
 
 export interface GeneratedImage {
@@ -18,7 +20,7 @@ export interface GeneratedImage {
 
 export interface ProcessingResult {
   originalImage: string;
-  extractedItems: MenuItem[];
+  extractedItems: MenuItemModel[];
   generatedImages: GeneratedImage[];
   processingStatus: ProcessingStatus;
 }
@@ -48,7 +50,7 @@ export interface ProcessingStatusResponse {
 
 export interface ResultsResponse {
   sessionId: string;
-  results: ProcessingResult;
+  results: MenuItemModel[];
 }
 
 // Frontend-specific types
@@ -64,6 +66,13 @@ export interface AppState {
   sessionId: string | null;
   uploadState: FileUploadState;
   processingState: ProcessingStatusResponse | null;
-  results: ProcessingResult | null;
+  results: MenuItemModel[] | null;
   error: string | null;
+}
+
+export interface MenuItemModel extends MenuItem {
+  sessionId: string;
+  generatedImageUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

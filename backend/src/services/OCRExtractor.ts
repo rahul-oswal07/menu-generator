@@ -170,31 +170,6 @@ export class OCRExtractor implements IOCRExtractor {
 
     // Mock menu text for testing
     const mockMenuText = `
-APPETIZERS
-
-Crispy Calamari Rings - $12.99
-Fresh squid rings served with marinara sauce and lemon
-
-Buffalo Chicken Wings - $14.99
-Spicy wings with celery sticks and blue cheese dip
-
-Spinach Artichoke Dip - $10.99
-Creamy dip served with tortilla chips
-
-MAIN COURSES
-
-Grilled Salmon - $24.99
-Atlantic salmon with lemon herb butter and seasonal vegetables
-
-Ribeye Steak - $32.99
-12oz ribeye with garlic mashed potatoes and asparagus
-
-Chicken Parmesan - $19.99
-Breaded chicken breast with marinara and mozzarella over pasta
-
-Vegetarian Pasta - $16.99
-Penne with roasted vegetables in olive oil and herbs
-
 DESSERTS
 
 Chocolate Lava Cake - $8.99

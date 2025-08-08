@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { ResultsManager } from '../services/ResultsManager';
 import { ApiResponse } from '../types';
 
@@ -39,8 +39,8 @@ router.get('/:shareId', async (req: Request, res: Response) => {
     }
 
     // Find the specific menu item and image
-    const menuItem = results.extractedItems.find(item => item.id === shareLink.menuItemId);
-    const generatedImage = results.generatedImages.find(img => img.menuItemId === shareLink.menuItemId);
+    const menuItem = null;
+    const generatedImage = null
 
     if (!menuItem || !generatedImage) {
       const response: ApiResponse = {
@@ -94,7 +94,7 @@ router.get('/:shareId/image', async (req: Request, res: Response) => {
     }
 
     // Redirect to the actual image URL
-    return res.redirect(shareLink.url);
+    return res.redirect(shareLink.url?.toString() || '/assets/placeholder-dish.jpg');
   } catch (error) {
     console.error('Error accessing shared image:', error);
     return res.status(500).json({

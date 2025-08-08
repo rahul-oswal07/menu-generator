@@ -1,8 +1,8 @@
-import multer from 'multer';
-import { Request, Response, NextFunction } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
+import { NextFunction, Request, Response } from 'express';
 import fs from 'fs';
+import multer from 'multer';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import { validateUploadedFile } from '../utils/fileValidation';
 
 // Ensure uploads directory exists
@@ -12,15 +12,17 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
+const storage = 
+multer.diskStorage({
   destination: (req, _file, cb) => {
-    // Create session-specific directory
-    const sessionId = req.body.sessionId || uuidv4();
-    const sessionDir = path.join(uploadsDir, sessionId, 'original');
-    
+    // Generate or reuse sessionId ONCE per request and store on req object
+    if (!req.body.sessionId) {
+      req.body.sessionId = uuidv4();
+    }
+    const sessionId = req.body.sessionId;
+    const sessionDir = path.join(uploadsDir, `session_${sessionId}`, 'original');
     // Ensure session directory exists
     fs.mkdirSync(sessionDir, { recursive: true });
-    
     cb(null, sessionDir);
   },
   filename: (_req, file, cb) => {
